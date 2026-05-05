@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# Welcome to your polling system 
 
 TODO: Document your project here
