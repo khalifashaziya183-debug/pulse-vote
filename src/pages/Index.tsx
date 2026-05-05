@@ -62,6 +62,11 @@ const Index = () => {
             <h1 className="text-xl font-bold">Pulse<span className="text-gradient">Vote</span></h1>
           </div>
           <div className="flex items-center gap-2">
+            <div className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-secondary/50 font-mono text-xs transition-transform ${pulse ? "scale-110 border-primary" : ""}`}>
+              <TrendingUp className="w-3.5 h-3.5 text-primary" />
+              <span className="text-muted-foreground">votes:</span>
+              <span className="font-bold text-foreground tabular-nums">{totalVotes}</span>
+            </div>
             <CreatePollDialog userId={user.id} />
             <Button variant="ghost" size="icon" onClick={() => supabase.auth.signOut()} title="Sign out">
               <LogOut className="w-4 h-4" />
