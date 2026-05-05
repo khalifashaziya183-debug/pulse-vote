@@ -5,13 +5,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { PollCard } from "@/components/PollCard";
 import { CreatePollDialog } from "@/components/CreatePollDialog";
 import { Button } from "@/components/ui/button";
-import { LogOut, Radio } from "lucide-react";
+import { LogOut, Radio, TrendingUp } from "lucide-react";
+import { toast } from "sonner";
 
 type Poll = { id: string; question: string; creator_id: string; created_at: string };
 
 const Index = () => {
   const { user, loading } = useAuth();
   const [polls, setPolls] = useState<Poll[]>([]);
+  const [totalVotes, setTotalVotes] = useState(0);
+  const [pulse, setPulse] = useState(false);
 
   useEffect(() => { document.title = "PulseVote · Real-time polls"; }, []);
 
@@ -20,11 +23,25 @@ const Index = () => {
     supabase.from("polls").select("*").order("created_at", { ascending: false })
       .then(({ data }) => setPolls(data ?? []));
 
+    const refreshVotes = () =>
+      supabase.from("votes").select("*", { count: "exact", head: true })
+        .then(({ count }) => setTotalVotes(count ?? 0));
+    refreshVotes();
+
     const ch = supabase
       .channel("polls-list")
       .on("postgres_changes", { event: "*", schema: "public", table: "polls" }, () => {
         supabase.from("polls").select("*").order("created_at", { ascending: false })
           .then(({ data }) => setPolls(data ?? []));
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "votes" }, (payload) => {
+        refreshVotes();
+        if (payload.eventType === "INSERT") {
+          setPulse(true);
+          setTimeout(() => setPulse(false), 600);
+          const voterId = (payload.new as any)?.user_id;
+          if (voterId && voterId !== user.id) toast("🗳️ New vote just landed");
+        }
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
